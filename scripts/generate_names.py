@@ -57,7 +57,7 @@ NUM_NAMES = 20              # Number of names to generate
 TOP_K = 5                  # Top-k sampling (1-20, lower = more focused)
 TEMPERATURE = 1.0          # Sampling temperature (0.5-2.0, lower = more consistent)
 MAX_LENGTH = 15            # Maximum name length
-START_WITH = ""            # Start names with these letters (empty = any)
+START_WITH = "K"            # Start names with these letters (empty = any)
 GENDER_PREFERENCE = "female" # 'male', 'female', or 'both'
                            # ⚠️ Note: Currently 'both' is recommended as the model was trained on combined data
 
@@ -163,8 +163,8 @@ def generate_names(model, dataset, config):
         # Start generation
         if START_WITH:
             # Convert starting letters to indices
-            start_indices = [dataset.stoi.get(c, 0) for c in START_WITH.lower()]
-            context = torch.tensor([start_indices], dtype=torch.long, device=device)
+            start_indices = [dataset.stoi.get(c, 0) for c in START_WITH]
+            context = torch.tensor([[0] + start_indices], dtype=torch.long, device=device)  # Include start token
         else:
             context = torch.zeros((1, 1), dtype=torch.long, device=device)
 
