@@ -2,16 +2,11 @@
 """
 Nepali Name Generator - Fine-Tuning Script
 
-This# Training Configuration
-MAX_STEPS = 500              # Fine-tuning steps for male-specific model
-LEARNING_RATE = 0.0001       # Learning rate (10x smaller than initial)
-BATCH_SIZE = 16              # Batch size (smaller for fine-tuning)
-EVAL_INTERVAL = 50           # Evaluate every 50 steps
-SAVE_INTERVAL = 100          # Save model every 100 stepst fine-tunes an existing trained model on new data.
+This script fine-tunes an existing trained model on new data.
 Perfect for creating gender-specific models or adapting to new datasets.
 
 USAGE:
-    python scripts/finetune_model.py
+    python scripts/fine_tune_model.py
 
 CUSTOMIZATION:
     Edit the variables below to customize your fine-tuning:
@@ -34,7 +29,7 @@ from config import (
 )
 from models import Transformer
 from data import create_datasets
-from utils import evaluate
+from utils import evaluate, generate
 
 import torch
 
@@ -76,14 +71,14 @@ class InfiniteDataLoader:
 
 # Model Configuration
 BASE_MODEL = "models/best_results/model.pt"  # Existing model to fine-tune
-OUTPUT_DIR = "models/female_finetuned"        # Where to save female-specific model
+OUTPUT_DIR = "models/male_finetuned"          # Where to save male-specific model
 
 # Data Configuration
-TARGET_DATA = ["data/female.txt"]  # Female data for fine-tuning
+TARGET_DATA = ["data/male.txt"]  # Male data for fine-tuning
 # Options: ["data/male.txt"], ["data/female.txt"], ["data/male.txt", "data/female.txt"]
 
 # Training Configuration
-MAX_STEPS = 500              # Fine-tuning steps (500-1000 recommended)
+MAX_STEPS = 1000             # Fine-tuning steps (500-1000 recommended)
 LEARNING_RATE = 0.0001       # Learning rate (0.0001 = 10x smaller than initial)
 BATCH_SIZE = 16              # Batch size (smaller for fine-tuning)
 EVAL_INTERVAL = 50           # Evaluate every N steps
@@ -123,7 +118,7 @@ def load_base_model():
     # We need to use the same vocab as the base model was trained on
     original_data = ["data/male.txt", "data/female.txt"]  # Base model was trained on combined data
     temp_config = Config(data=DataConfig(input_files=original_data))
-    train_dataset, _ = create_datasets(original_data, temp_config.data)
+    train_dataset, _ = create_datasets(original_data, temp_config.data, use_lowercase=False)
 
     # Model configuration - use SAME as base model
     vocab_size = train_dataset.get_vocab_size()
@@ -172,7 +167,7 @@ def setup_fine_tuning(model, device):
     )
 
     # Load datasets with target data
-    train_dataset, test_dataset = create_datasets(TARGET_DATA, config.data)
+    train_dataset, test_dataset = create_datasets(TARGET_DATA, config.data, use_lowercase=True)
 
     print(f"📊 Target data: {len(train_dataset)} training, {len(test_dataset)} test samples")
     print(f"🔤 Target vocab: {train_dataset.get_vocab_size()} chars, max length {train_dataset.get_output_length()}")
@@ -249,6 +244,14 @@ def fine_tune_model(model, config, train_dataset, test_dataset, optimizer, sched
         # Regular saving
         if step > 0 and step % config.training.save_interval == 0:
             save_model(model, os.path.join(OUTPUT_DIR, f"model_step_{step}.pt"))
+            print(f"💾 Saved checkpoint at step {step}")
+            
+            # Generate sample names to check quality
+            print(f"🎭 Sample names at step {step}:")
+            sample_names = generate_sample_names(model, train_dataset, device, num_samples=5)
+            for i, name in enumerate(sample_names, 1):
+                print(f"   {i}. {name}")
+            print()
 
     print("🎉 Fine-tuning complete!")
     print(f"🏆 Best test loss achieved: {best_loss:.4f}")
@@ -269,7 +272,66 @@ def evaluate_model(model, dataset, device, num_batches=10):
 def save_model(model, path):
     """Save model to disk."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    torch.save(model.state_dict(), path)
+    try:
+        torch.save(model.state_dict(), path)
+        print(f"✅ Model saved to {path}")
+    except Exception as e:
+        print(f"❌ Error saving model to {path}: {e}")
+        # Try with a different filename
+        import time
+        timestamp = int(time.time())
+        backup_path = path.replace('.pt', f'_{timestamp}.pt')
+        try:
+            torch.save(model.state_dict(), backup_path)
+            print(f"✅ Model saved to backup path: {backup_path}")
+        except Exception as e2:
+            print(f"❌ Failed to save model: {e2}")
+
+def generate_sample_names(model, dataset, device, num_samples=5):
+    """Generate sample names to check quality."""
+    model.eval()
+    generated_names = []
+    
+    for _ in range(num_samples):
+        # Start with zero context (random generation)
+        context = torch.zeros((1, 1), dtype=torch.long, device=device)
+        
+        with torch.no_grad():
+            generated = generate(
+                model,
+                context,
+                max_new_tokens=dataset.get_output_length() - 1,
+                temperature=1.0,
+                do_sample=True,
+                top_k=10
+            )
+        
+        # Decode the generated sequence
+        name_indices = generated[0].tolist()
+        row = name_indices[1:]  # Skip start token
+        crop_index = row.index(0) if 0 in row else len(row)
+        row = row[:crop_index]
+        
+        # Filter out invalid tokens that might not be in the current vocabulary
+        valid_row = []
+        for token_id in row:
+            if token_id in dataset.itos:
+                valid_row.append(token_id)
+            else:
+                break  # Stop at first invalid token
+        
+        if valid_row:
+            name = dataset.decode(valid_row).strip()
+        else:
+            name = ""
+        
+        if name and len(name) > 1:
+            # Capitalize first letter for proper display
+            name = name.capitalize()
+            generated_names.append(name)
+    
+    model.train()
+    return generated_names[:num_samples]
 
 def main():
     """Main fine-tuning function."""

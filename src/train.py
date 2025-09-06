@@ -120,7 +120,7 @@ def main():
 
     # init datasets
     input_files = config.data.input_files if config.data.input_files else config.data.input_file
-    train_dataset, test_dataset = create_datasets(input_files, config.data)
+    train_dataset, test_dataset = create_datasets(input_files, config.data, use_lowercase=True)
     vocab_size = train_dataset.get_vocab_size()
     block_size = train_dataset.get_output_length()
     print(f"dataset determined that: {vocab_size=}, {block_size=}")

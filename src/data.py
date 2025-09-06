@@ -44,7 +44,7 @@ class CharDataset(Dataset):
         y[len(ix)+1:] = -1 # index -1 will mask the loss at the inactive locations
         return x, y
 
-def create_datasets(input_file, data_config=None):
+def create_datasets(input_file, data_config=None, use_lowercase=True):
     """
     Create training and test datasets from input file(s).
     For Nepali names, input_file can be a list of files or a single file.
@@ -72,8 +72,16 @@ def create_datasets(input_file, data_config=None):
         words = [w.strip() for w in words] # get rid of any leading or trailing white space
         words = [w for w in words if w] # get rid of any empty strings
 
+    # Always convert to lowercase for optimal model performance with clean a-z training
+    words = [w.lower() for w in words]
+    
+    # Filter to ensure only a-z characters (safety check)
+    import re
+    words = [w for w in words if re.match(r'^[a-z]+$', w) and len(w) >= 2]
+    
     chars = sorted(list(set(''.join(words)))) # all the possible characters
     max_word_length = max(len(w) for w in words)
+    
     print(f"number of examples in the dataset: {len(words)}")
     print(f"max word length: {max_word_length}")
     print(f"number of unique characters in the vocabulary: {len(chars)}")

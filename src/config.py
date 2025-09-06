@@ -29,7 +29,7 @@ class DataConfig:
 @dataclass
 class TrainingConfig:
     """Configuration for training parameters."""
-    max_steps: int = -1  # max number of optimization steps (-1 for infinite)
+    max_steps: int = 5000  # max number of optimization steps (-1 for infinite)
     batch_size: int = 32  # batch size during optimization
     learning_rate: float = 5e-4  # learning rate
     weight_decay: float = 0.01  # weight decay

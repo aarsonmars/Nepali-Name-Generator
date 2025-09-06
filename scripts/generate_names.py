@@ -57,12 +57,12 @@ NUM_NAMES = 20              # Number of names to generate
 TOP_K = 5                  # Top-k sampling (1-20, lower = more focused)
 TEMPERATURE = 1.0          # Sampling temperature (0.5-2.0, lower = more consistent)
 MAX_LENGTH = 15            # Maximum name length
-START_WITH = "K"            # Start names with these letters (empty = any)
-GENDER_PREFERENCE = "female" # 'male', 'female', or 'both'
+START_WITH = "S"            # Start names with these letters (empty = any)
+GENDER_PREFERENCE = "male" # 'male', 'female', or 'both'
                            # ⚠️ Note: Currently 'both' is recommended as the model was trained on combined data
 
 # Model configuration
-MODEL_DIR = "models/best_results"  # Default to combined model
+MODEL_DIR = "models/male_finetuned"  # Use male fine-tuned model
 
 # ===== END CONFIGURABLE PARAMETERS =====
 
@@ -101,7 +101,8 @@ def load_model_and_data():
     # The model was trained on combined male/female data, so we need that vocab
     original_data = ["data/male.txt", "data/female.txt"]
     temp_config = Config(data=DataConfig(input_files=original_data))
-    train_dataset, _ = create_datasets(original_data, temp_config.data)
+    # Use lowercase for consistency with cleaned data
+    train_dataset, _ = create_datasets(original_data, temp_config.data, use_lowercase=True)
 
     # Use the original model's vocabulary and block size
     vocab_size = train_dataset.get_vocab_size()
@@ -135,7 +136,7 @@ def load_model_and_data():
     print(f"📏 Max name length: {block_size}")
 
     # Now create dataset for generation using the gender preference
-    gen_dataset, _ = create_datasets(data_files, Config(data=DataConfig(input_files=data_files)).data)
+    gen_dataset, _ = create_datasets(data_files, Config(data=DataConfig(input_files=data_files)).data, use_lowercase=True)
 
     return model, gen_dataset, Config(
         data=DataConfig(input_files=data_files),
@@ -193,6 +194,8 @@ def generate_names(model, dataset, config):
         # Clean up the name
         name = name.strip()
         if name and len(name) > 1:  # Only add names longer than 1 character
+            # Capitalize first letter for proper display
+            name = name.capitalize()
             generated_names.append(name)
 
     return generated_names[:NUM_NAMES]  # Return exactly NUM_NAMES
