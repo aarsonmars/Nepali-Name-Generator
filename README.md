@@ -33,6 +33,10 @@ nepali-name-generator/
 - **Gender-Specific Models**: Fine-tuned models for male, female, or combined name generation
 - **Easy Fine-Tuning**: Scripts to create specialized models from base models
 
+## Technical Summary
+
+This project trains and samples from character-level neural language models implemented in PyTorch. The primary model is a GPT-2-like Transformer (causal self-attention) with options for simpler architectures (RNN/GRU, BoW, MLP). Names are generated autoregressively with temperature / top-k sampling.
+
 ## Installation
 
 1. Clone or download the project
