@@ -537,6 +537,7 @@ def main():
                 st.markdown('<div class="helper" style="color: rgba(255,200,200,0.85);">⚠️ Settings changed — click <strong>Generate</strong>.</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
+
     # Main content area
     content_col = st.container()
     with content_col:
