@@ -1,4 +1,3 @@
 torch>=2.0.0
-tensorboard
 streamlit>=1.28.0
 roman-nepali-translator
