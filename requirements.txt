@@ -3,3 +3,4 @@ torchvision
 torchaudio
 tensorboard
 streamlit>=1.28.0
+nepali-translator-package
