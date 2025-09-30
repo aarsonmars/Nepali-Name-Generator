@@ -332,41 +332,46 @@ st.markdown("""
     }
 
     .generate-button-wrapper .stButton > button {
-        background: linear-gradient(125deg, #FF6B6B, #FFD166, #4ECDC4, #7B61FF) !important;
-        background-size: 260% 260% !important;
-        color: #06253D !important;
-        padding: 1.05rem 3.1rem !important;
-        font-size: 1.14rem !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-size: 200% 200% !important;
+        color: #ffffff !important;
+        padding: 1.5rem 4.2rem !important;
+        font-size: 1.35rem !important;
         font-weight: 800 !important;
-        border: 2px solid rgba(255,255,255,0.22) !important;
-        border-radius: 22px !important;
-        letter-spacing: 0.4px !important;
-        box-shadow: 0 22px 55px rgba(48, 178, 199, 0.35), 0 0 0 2px rgba(6, 37, 61, 0.12) inset !important;
-        animation: gradientFlow 8s ease infinite;
+        border: none !important;
+        border-radius: 30px !important;
+        letter-spacing: 0.5px !important;
+        box-shadow: 0 25px 60px rgba(102, 126, 234, 0.4), 0 0 0 1px rgba(255,255,255,0.1) inset !important;
+        animation: gradientFlow 8s ease infinite, buttonGlow 3s ease-in-out infinite;
         isolation: isolate;
+        position: relative !important;
+        overflow: hidden !important;
+        text-transform: none !important;
+        min-width: 280px !important;
     }
 
     .generate-button-wrapper .stButton > button p {
         margin: 0 !important;
-        text-transform: uppercase;
-        letter-spacing: 0.55px;
-        font-weight: 900;
+        text-transform: none !important;
+        letter-spacing: 0.3px;
+        font-weight: 800;
         display: inline-flex;
         align-items: center;
-        gap: 0.35rem;
-        background: linear-gradient(90deg, #093b58 0%, #ef476f 50%, #ffd166 100%);
-        background-clip: text;
-        -webkit-background-clip: text;
-        color: rgba(6, 37, 61, 0.85);
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 3px 8px rgba(6, 37, 61, 0.3);
+        gap: 0.4rem;
+        color: #ffffff !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        font-size: inherit;
     }
 
     .generate-button-wrapper .stButton > button::before {
-        content: "🇳🇵";
-        font-size: 1.28rem;
-        margin-right: 0.55rem;
-        filter: drop-shadow(0 2px 6px rgba(6,37,61,0.25));
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.8s ease;
     }
 
     .generate-button-wrapper .stButton > button::after {
@@ -383,18 +388,23 @@ st.markdown("""
     }
 
     .generate-button-wrapper .stButton > button:hover {
-        transform: translateY(-6px) scale(1.03) !important;
-        box-shadow: 0 30px 68px rgba(48,178,199,0.38) !important;
+        transform: translateY(-10px) scale(1.06) !important;
+        box-shadow: 0 40px 80px rgba(102, 126, 234, 0.5) !important;
+        background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+    }
+
+    .generate-button-wrapper .stButton > button:hover::before {
+        left: 100%;
     }
 
     .generate-button-wrapper .stButton > button:hover::after {
-        opacity: 0.9;
-        filter: blur(22px);
+        opacity: 0.8;
+        filter: blur(25px);
     }
 
     .generate-button-wrapper .stButton > button:active {
-        transform: translateY(0) scale(0.985) !important;
-        box-shadow: 0 16px 45px rgba(48,178,199,0.32) !important;
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 0 20px 50px rgba(102, 126, 234, 0.4) !important;
     }
 
     /* Generate area styling */
@@ -542,6 +552,7 @@ st.markdown("""
     @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     @keyframes gradientFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
     @keyframes buttonAura { 0%, 100% { opacity: 0.35; transform: scale(0.96); } 50% { opacity: 0.8; transform: scale(1.06); } }
+    @keyframes buttonGlow { 0%, 100% { box-shadow: 0 25px 60px rgba(102, 126, 234, 0.4); } 50% { box-shadow: 0 30px 70px rgba(102, 126, 234, 0.6); } }
 
     /* Name cards: center text and ensure consistent vertical alignment */
     .name-card { transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 52px; }
@@ -890,16 +901,11 @@ def main():
         with btn_cols[1]:
             st.markdown('<div class="cta generate-button-wrapper">', unsafe_allow_html=True)
             generate_clicked = st.button(
-                "Generate Names" if not (settings_changed and st.session_state.get('generated_names'))
-                else "Regenerate with New Settings",
+                "✨ Generate Names" if not (settings_changed and st.session_state.get('generated_names'))
+                else "🔄 Regenerate with New Settings",
                 key="generate",
-                help="Click to generate beautiful Nepali names!"
+                help="Click to generate beautiful Nepali names with AI!"
             )
-            # subtle instruction centered under the button
-            if not hasattr(st.session_state, 'generated_names'):
-                st.markdown('<div class="helper">Adjust settings in the sidebar and click <strong>Generate Names</strong>.</div>', unsafe_allow_html=True)
-            elif settings_changed:
-                st.markdown('<div class="helper" style="color: rgba(255,200,200,0.85);">⚠️ Settings changed — click <strong>Generate</strong>.</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
 
